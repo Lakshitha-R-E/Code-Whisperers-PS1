@@ -13,6 +13,7 @@ import {
   LogOut,
   Shield,
   MapPin,
+  Award,
 } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 
@@ -20,6 +21,7 @@ const navItems = [
   { to: '/',           label: 'Dashboard',  Icon: LayoutDashboard },
   { to: '/map',        label: 'Map View',   Icon: Map },
   { to: '/analysis',   label: 'Analysis',   Icon: BarChart3 },
+  { to: '/interventions', label: 'Interventions', Icon: Award },
   { to: '/simulator',  label: 'Recommendation Engine',  Icon: FlaskConical },
   { to: '/simulation', label: 'Impact Simulation', Icon: Beaker },
   { to: '/geo-intel',  label: 'Geo Image Intel', Icon: ScanLine },

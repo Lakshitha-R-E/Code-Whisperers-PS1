@@ -12,12 +12,12 @@ const PORT = process.env.PORT || 4000;
 const HOST = '0.0.0.0'; // explicit — must bind to all interfaces, not just
                           // localhost, to be reachable when deployed.
 
-// CORS: if FRONTEND_ORIGIN is set (comma-separated list for multiple
+// CORS: if FRONTEND_ORIGIN or FRONTEND_URL is set (comma-separated list for multiple
 // origins), only those origins are allowed — the right setup for a real
-// deployment. If it's unset, all origins are allowed, which keeps local
-// development and quick prototype deployments working with zero config.
-const allowedOrigins = process.env.FRONTEND_ORIGIN
-  ? process.env.FRONTEND_ORIGIN.split(',').map(o => o.trim()).filter(Boolean)
+// deployment. If unset, all origins are allowed.
+const rawOrigin = process.env.FRONTEND_ORIGIN || process.env.FRONTEND_URL;
+const allowedOrigins = rawOrigin
+  ? rawOrigin.split(',').map(o => o.trim()).filter(Boolean)
   : null;
 
 app.use(cors(allowedOrigins ? {

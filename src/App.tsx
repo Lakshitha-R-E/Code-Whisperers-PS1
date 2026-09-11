@@ -10,6 +10,7 @@ import AlertsPage from './pages/Alerts';
 import ReportsPage from './pages/Reports';
 import ProjectDetailPage from './pages/ProjectDetail';
 import GeoImageIntel from './pages/GeoImageIntel';
+import InterventionAssessmentPage from './pages/InterventionAssessment';
 import Login from './pages/Login';
 import Chatbot from './components/Chatbot';
 import { useAuthStore } from './store/authStore';
@@ -53,6 +54,7 @@ const App: React.FC = () => {
             <Route path="/reports" element={<ReportsPage />} />
             <Route path="/project/:id" element={<ProjectDetailPage />} />
             <Route path="/geo-intel" element={<GeoImageIntel />} />
+            <Route path="/interventions" element={<InterventionAssessmentPage />} />
             <Route path="*" element={<Dashboard />} />
           </Routes>
         </main>

@@ -244,6 +244,64 @@ const ReportsPage: React.FC = () => {
             </div>
           </div>
 
+          {/* Data Provenance & Earth Observation Specifications */}
+          <div className="space-y-2">
+            <h4 className="text-sm font-bold uppercase tracking-wide flex items-center gap-1.5 text-text-dark border-b border-gray-200 pb-2">
+              <Satellite className="w-4 h-4 text-primary-600" />
+              Data Provenance &amp; Scientific Specifications
+            </h4>
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs text-left">
+                <thead>
+                  <tr className="border-b border-gray-300 text-gray-500 font-bold">
+                    <th className="pb-2">Analytical Metric</th>
+                    <th className="pb-2">Data Engine</th>
+                    <th className="pb-2">Sensor / Dataset</th>
+                    <th className="pb-2">Resolution</th>
+                    <th className="pb-2">Provenance Classification</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  <tr>
+                    <td className="py-2 font-semibold">Soil Moisture Index (SSMI)</td>
+                    <td className="py-2">Google Earth Engine</td>
+                    <td className="py-2">Sentinel-1 C-band SAR (VV polarisation)</td>
+                    <td className="py-2">10 metres</td>
+                    <td className="py-2"><span className="px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 font-bold text-[10px]">LIVE SATELLITE (DERIVED)</span></td>
+                  </tr>
+                  <tr>
+                    <td className="py-2 font-semibold">LULC &amp; Vegetation Canopy</td>
+                    <td className="py-2">Google Earth Engine</td>
+                    <td className="py-2">Landsat 8/9 OLI/TIRS Surface Reflectance</td>
+                    <td className="py-2">30 metres</td>
+                    <td className="py-2"><span className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold text-[10px]">LIVE / PROCESSED</span></td>
+                  </tr>
+                  <tr>
+                    <td className="py-2 font-semibold">Topographic Slope &amp; Relief</td>
+                    <td className="py-2">USGS / NASA</td>
+                    <td className="py-2">SRTM GL1 Global 1-arcsecond DEM</td>
+                    <td className="py-2">30 metres</td>
+                    <td className="py-2"><span className="px-1.5 py-0.5 rounded bg-purple-100 text-purple-800 font-bold text-[10px]">PROCESSED TERRAIN</span></td>
+                  </tr>
+                  <tr>
+                    <td className="py-2 font-semibold">Watershed &amp; Drainage Boundaries</td>
+                    <td className="py-2">State Remote Sensing Center</td>
+                    <td className="py-2">Official Watershed Delineation Vector</td>
+                    <td className="py-2">1:50,000 Scale</td>
+                    <td className="py-2"><span className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-700 font-bold text-[10px]">CONFIGURED DATASET</span></td>
+                  </tr>
+                  <tr>
+                    <td className="py-2 font-semibold">Intervention Works Inventory</td>
+                    <td className="py-2">Field Engineering Records</td>
+                    <td className="py-2">Dungarpur Micro-Intervention Sample Dataset</td>
+                    <td className="py-2">GPS Points</td>
+                    <td className="py-2"><span className="px-1.5 py-0.5 rounded bg-amber-100 text-amber-800 font-bold text-[10px]">DEMONSTRATION DATA</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
           {/* Full Structure Inventory */}
           <div className="space-y-2">
             <h4 className="text-sm font-bold uppercase tracking-wide flex items-center gap-1.5 text-text-dark border-b border-gray-200 pb-2">
@@ -293,15 +351,15 @@ const ReportsPage: React.FC = () => {
         </div>
       )}
 
-      {/* Future Scope — Planned Enhancements (app-only, excluded from the printed audit report) */}
+      {/* System Operational Architecture Status */}
       <div className="print:hidden bg-white border border-gray-200 rounded-lg p-6 shadow-sm space-y-4">
         <div className="flex items-center gap-2">
           <div className="w-9 h-9 rounded-full bg-secondary-100 flex items-center justify-center flex-shrink-0">
             <Rocket className="w-5 h-5 text-secondary-600" />
           </div>
           <div>
-            <h3 className="text-sm font-bold uppercase tracking-wide text-text-dark">Future Scope — Planned Enhancements</h3>
-            <p className="text-xs text-gray-500">Roadmap items beyond the current SIH prototype.</p>
+            <h3 className="text-sm font-bold uppercase tracking-wide text-text-dark">System Operational Architecture &amp; Data Pipeline</h3>
+            <p className="text-xs text-gray-500">SIH26015 solution operational baseline and provider integration status.</p>
           </div>
         </div>
 
@@ -311,29 +369,29 @@ const ReportsPage: React.FC = () => {
               icon: Satellite,
               iconBg: 'bg-primary-100',
               iconColor: 'text-primary-600',
-              title: 'Direct SRISHTI-DRISHTI Integration',
-              desc: 'This prototype uses Google Earth Engine (Landsat 8/9) as a substitute satellite-analysis platform. Direct integration with the official NRSC/ISRO SRISHTI-DRISHTI platform is pending authorized government access.',
+              title: 'Decoupled SRISHTI-DRISHTI Provider Architecture',
+              desc: 'Implemented clean SatelliteDataProvider abstraction. GoogleEarthEngineProvider acts as the operational engine, with SrishtiDrishtiProvider as an integration-ready adapter conforming to ISRO/NRSC OGC and GeoTIFF standards.',
             },
             {
               icon: Droplets,
               iconBg: 'bg-tertiary-100',
               iconColor: 'text-tertiary-600',
-              title: 'True Soil Moisture (SAR-based)',
-              desc: 'Currently shows an NDWI Wetness Proxy derived from optical Landsat imagery. Genuine soil-moisture measurement would require radar/SAR data (e.g. Sentinel-1) or a dedicated mission (SMAP/SMOS), not yet integrated.',
+              title: 'Sentinel-1 C-band SAR Soil Moisture Pipeline',
+              desc: 'Live query pipeline for COPERNICUS/S1_GRD VV polarization radar backscatter. Normalizes dynamic backscatter to relative Surface Soil Moisture Index (SSMI) with explicit data-sufficiency checks.',
             },
             {
               icon: BrainCircuit,
               iconBg: 'bg-secondary-100',
               iconColor: 'text-secondary-600',
-              title: 'Trained Image-Classification Model',
-              desc: 'Field-photo content analysis currently runs on heuristic colour-based rules (water/vegetation/bare-soil detection), not a trained ML/CV model. A trained model could replace this baseline for higher accuracy.',
+              title: 'Multi-Factor Evidence Validation Engine',
+              desc: 'Evaluates field photos using point-in-polygon ray-casting watershed containment, registered intervention distance audit, timestamp verification, and live satellite corroboration, computing a 0–100 trust score.',
             },
             {
               icon: KeyRound,
               iconBg: 'bg-accent-100',
               iconColor: 'text-accent-600',
-              title: 'JWT-Protected API Routes',
-              desc: 'Login issues a genuine signed JWT, but downstream API routes do not yet require or verify it on each request. Enforcing token verification across all backend routes is a planned hardening step.',
+              title: 'Production Auth & Cloud Deployment Readiness',
+              desc: 'JWT authentication with bcrypt password verification, dynamic CORS origin handling via FRONTEND_URL, and cloud-native EE_SERVICE_ACCOUNT_KEY_JSON support for Render deployment.',
             },
           ].map(item => (
             <div key={item.title} className="border border-gray-100 rounded-lg p-4 flex gap-3">

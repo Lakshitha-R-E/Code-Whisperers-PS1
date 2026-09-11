@@ -6,6 +6,12 @@ export interface PointAnalysisResult {
   radius_m: number;
   ndvi: { mean: number | null; min: number | null; max: number | null };
   ndwi: { mean: number | null; min: number | null; max: number | null };
+  soil_moisture_index?: {
+    vv_backscatter_db: number | null;
+    relative_ssmi_pct: number | null;
+    sensor: string;
+    methodology: string;
+  };
   lulc_dominant_class: string;
   lulc_class_percentages: Record<string, number>;
   source: 'live';

@@ -220,3 +220,168 @@ export interface GeoJsonFeature<P = Record<string, unknown>> {
   properties: P;
   geometry: GeoJsonGeometry;
 }
+
+// ── Satellite Provider & Analysis Contracts ──────────────────────────────────
+export interface SatelliteProviderMeta {
+  provider: string;
+  type: 'active' | 'adapter' | 'mock';
+  configured: boolean;
+  serviceAccount?: string | null;
+  supportedSensors: string[];
+  operationalCapabilities: string[];
+}
+
+export interface SatelliteStatusResponse {
+  activeProvider: string;
+  providers: {
+    earthEngine: SatelliteProviderMeta;
+    srishtiDrishti: {
+      provider: string;
+      type: string;
+      status: string;
+      configured: boolean;
+      endpoint: string;
+      agency: string;
+      supportedSensors: string[];
+      note: string;
+    };
+  };
+  configuredWatersheds: { id: string; name: string }[];
+}
+
+export interface Sentinel1SoilMoistureResult {
+  watershed_id: string;
+  watershed_name: string;
+  sufficient_data: boolean;
+  metric?: string;
+  methodology?: string;
+  disclaimer?: string;
+  periods?: {
+    before: { range: string; observation_count: number; mean_backscatter_db: number; ssmi_pct: number };
+    after: { range: string; observation_count: number; mean_backscatter_db: number; ssmi_pct: number };
+  };
+  change?: {
+    backscatter_delta_db: number;
+    ssmi_absolute_delta_pct: number;
+    ssmi_relative_change_pct: number | null;
+    trend: 'Moisture Improvement' | 'Moisture Deficit' | 'Stable';
+  };
+  observation_counts?: { before: number; after: number };
+  message?: string;
+  source: string;
+  provider: string;
+  dataset: string;
+  spatial_resolution_m?: number;
+  computed_at: string;
+}
+
+export interface TemporalChangeResult {
+  watershed_id: string;
+  watershed_name: string;
+  before_year: number;
+  after_year: number;
+  metrics_before: {
+    forest_pct: number;
+    agricultural_pct: number;
+    water_bodies_pct: number;
+    barren_degraded_pct: number;
+    ndvi_mean: number | null;
+    ndwi_mean: number | null;
+  };
+  metrics_after: {
+    forest_pct: number;
+    agricultural_pct: number;
+    water_bodies_pct: number;
+    barren_degraded_pct: number;
+    ndvi_mean: number | null;
+    ndwi_mean: number | null;
+  };
+  deltas: {
+    forest_pct: number;
+    agricultural_pct: number;
+    water_bodies_pct: number;
+    barren_degraded_pct: number;
+    ndvi_mean: number | null;
+    ndwi_mean: number | null;
+  };
+  vegetation_trend: string;
+  source: string;
+  provider: string;
+  dataset: string;
+  computed_at: string;
+}
+
+export interface LandDegradationResult {
+  watershed_id: string;
+  watershed_name: string;
+  year: number;
+  degradation_risk: 'Low' | 'Moderate' | 'High';
+  degradation_index: number; // 0 - 100
+  factor_breakdown: {
+    barren_soil_exposure: { score: number; weight: string; measured_barren_pct: number };
+    vegetation_vigor_stress: { score: number; weight: string; measured_ndvi: number };
+    topographic_slope_vulnerability: { score: number; weight: string; mean_slope_degrees: number };
+    surface_moisture_deficit: { score: number; weight: string; measured_ndwi: number };
+  };
+  methodology: string;
+  disclaimer: string;
+  source: string;
+  provider: string;
+  dataset: string;
+  computed_at: string;
+}
+
+// ── Evidence Validation Engine ────────────────────────────────────────────────
+export interface ValidationCheckItem {
+  id: string;
+  label: string;
+  status: 'pass' | 'warn' | 'fail';
+  detail: string;
+}
+
+export interface EvidenceValidationResult {
+  gpsAvailable: boolean;
+  gpsValid: boolean;
+  insideWatershed: boolean;
+  watershedName?: string;
+  nearIntervention: boolean;
+  nearestInterventionName?: string;
+  nearestInterventionDistanceM?: number;
+  timestampValid: boolean;
+  timestampReasonable: boolean;
+  satelliteContextAvailable: boolean;
+  lulcConsistency: 'Consistent' | 'Acceptable' | 'Divergent';
+  duplicateCheck: boolean;
+  trustScore: number; // 0–100 calculated
+  confidenceLevel: 'High' | 'Medium' | 'Low';
+  summary: string;
+  checks: ValidationCheckItem[];
+}
+
+// ── Intervention Assessment & Ranking ─────────────────────────────────────────
+export interface InterventionAssessment {
+  projectId: string;
+  name: string;
+  type: ProjectType;
+  watershedId: string;
+  district: string;
+  lat: number;
+  lng: number;
+  ndviChange: number;
+  soilMoistureEnhancementPct: number;
+  wetnessChange: number;
+  benefitedAreaHa: number;
+  riskReductionPct: number;
+  effectivenessScore: number; // 0–100 calculated
+  confidence: 'High' | 'Medium' | 'Low';
+  assessmentDate: string;
+}
+
+export interface InterventionRankingItem {
+  type: string;
+  count: number;
+  averageEffectiveness: number;
+  averageBenefitedAreaHa: number;
+  confidence: 'High' | 'Medium' | 'Low';
+}
+

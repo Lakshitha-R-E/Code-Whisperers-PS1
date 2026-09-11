@@ -1,9 +1,10 @@
-import React, { useState, useCallback, useEffect, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import exifr from 'exifr';
 import Tesseract from 'tesseract.js';
 import {
   ScanLine, UploadCloud, MapPin, AlertTriangle, Layers, Building2,
   Map as MapIcon, RefreshCw, Eye, Satellite, Sparkles, Info,
+  CheckCircle2, XCircle, AlertCircle, ShieldCheck,
 } from 'lucide-react';
 import { getWatersheds } from '../services/watershedService';
 import { getGisLayers } from '../services/gisService';
@@ -12,6 +13,7 @@ import { haversineM, nearestPolygonCategory } from '../utils/whatIfScore';
 import { analyzeImageContent, type ImageContentAnalysis } from '../utils/imageContentAnalysis';
 import { parseOcrText } from '../utils/ocrParser';
 import { getPointAnalysis, type PointAnalysisResult } from '../services/pointAnalysisService';
+import { evaluateFieldEvidence } from '../utils/evidenceValidationEngine';
 import type { WatershedFeature, Project } from '../types';
 
 import Map from 'ol/Map';
@@ -54,6 +56,30 @@ const GeoImageIntel: React.FC = () => {
   const [satelliteStatus, setSatelliteStatus] = useState<'idle' | 'loading' | 'done' | 'error'>('idle');
   const [satelliteError, setSatelliteError] = useState<string | null>(null);
   const [analysisRadius, setAnalysisRadius] = useState<250 | 500 | 1000>(500);
+
+  const [watershedsList, setWatershedsList] = useState<WatershedFeature[]>([]);
+  const [projectsList, setProjectsList] = useState<Project[]>([]);
+
+  useEffect(() => {
+    Promise.all([getWatersheds(), getProjects()]).then(([ws, proj]) => {
+      setWatershedsList(ws);
+      setProjectsList(proj);
+    });
+  }, []);
+
+  const validation = useMemo(() => {
+    if (!result || (result.lat === 0 && result.lng === 0)) return null;
+    return evaluateFieldEvidence({
+      lat: result.lat,
+      lng: result.lng,
+      source: result.source,
+      timestamp: result.date ? `${result.date} ${result.time || ''}` : undefined,
+      watersheds: watershedsList,
+      projects: projectsList,
+      satelliteContext,
+      imageInterventionGuess: contentAnalysis?.interventionGuess,
+    });
+  }, [result, watershedsList, projectsList, satelliteContext, contentAnalysis]);
 
   const mapRef = useRef<HTMLDivElement>(null);
   const olMap = useRef<Map | null>(null);
@@ -387,6 +413,65 @@ const GeoImageIntel: React.FC = () => {
             </div>
           )}
 
+          {validation && (
+            <div className="bg-white border border-gray-200 rounded-lg p-5 shadow-sm space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-100 pb-3">
+                <div>
+                  <h2 className="text-sm font-bold text-text-dark uppercase tracking-wider flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-primary-600" /> Evidence Validation Engine
+                  </h2>
+                  <p className="text-xs text-gray-500 mt-0.5">{validation.summary}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="text-right">
+                    <span className="text-[10px] text-gray-400 font-semibold block uppercase">Evidence Trust Score</span>
+                    <span className="text-xl font-bold text-text-dark">{validation.trustScore} <span className="text-xs text-gray-400 font-normal">/ 100</span></span>
+                  </div>
+                  <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                    validation.confidenceLevel === 'High' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' :
+                    validation.confidenceLevel === 'Medium' ? 'bg-blue-100 text-blue-800 border border-blue-200' :
+                    'bg-rose-100 text-rose-800 border border-rose-200'
+                  }`}>
+                    {validation.confidenceLevel} Confidence
+                  </span>
+                </div>
+              </div>
+
+              {/* Inside Watershed Highlight */}
+              <div className={`rounded-lg p-3 flex items-start gap-2.5 text-xs font-medium ${
+                validation.insideWatershed ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-rose-50 text-rose-800 border border-rose-200'
+              }`}>
+                {validation.insideWatershed ? <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" /> : <XCircle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />}
+                <div>
+                  <span className="font-bold">Watershed Containment: {validation.insideWatershed ? 'VERIFIED INSIDE' : 'OUTSIDE BOUNDARY'}</span>
+                  <p className="mt-0.5 text-[11px] opacity-90">
+                    {validation.insideWatershed
+                      ? `Point coordinates [${result.lat.toFixed(5)}°, ${result.lng.toFixed(5)}°] verified within official boundary of ${validation.watershedName || 'configured watershed'}.`
+                      : `Coordinates lie outside registered watershed boundary polygon. Evidence flagged for audit review.`}
+                  </p>
+                </div>
+              </div>
+
+              {/* Verification Checklist */}
+              <div className="space-y-2">
+                <h3 className="text-xs font-bold text-gray-500 uppercase tracking-wide">Multi-Factor Evidence Audit</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {validation.checks.map((chk) => (
+                    <div key={chk.id} className="border border-gray-100 bg-gray-50/70 rounded p-2.5 flex items-start gap-2 text-xs">
+                      {chk.status === 'pass' && <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" />}
+                      {chk.status === 'warn' && <AlertCircle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />}
+                      {chk.status === 'fail' && <XCircle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />}
+                      <div>
+                        <span className="font-bold text-text-dark block">{chk.label}</span>
+                        <span className="text-[11px] text-gray-500">{chk.detail}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="bg-white border border-gray-200 rounded-lg p-5">
             <div className="flex items-center justify-between mb-1">
               <h2 className="text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2">
@@ -443,9 +528,10 @@ const GeoImageIntel: React.FC = () => {
                 {satelliteStatus === 'done' && satelliteContext && (
                   <>
                     <p className="text-xs text-gray-500 mt-3">Satellite context analyzed within {satelliteContext.radius_m}m of image location. Dataset: {satelliteContext.dataset}, {satelliteContext.spatial_resolution_m}m resolution.</p>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mt-3 text-sm">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 text-sm">
                       <div><p className="text-gray-500 text-xs font-semibold">NDVI (mean)</p><p className="font-mono text-gray-800">{satelliteContext.ndvi.mean ?? 'N/A'}</p></div>
-                      <div><p className="text-gray-500 text-xs font-semibold">NDWI Wetness Proxy (mean)</p><p className="font-mono text-gray-800">{satelliteContext.ndwi.mean ?? 'N/A'}</p></div>
+                      <div><p className="text-gray-500 text-xs font-semibold">NDWI Wetness Proxy</p><p className="font-mono text-gray-800">{satelliteContext.ndwi.mean ?? 'N/A'}</p></div>
+                      <div><p className="text-gray-500 text-xs font-semibold">Radar Soil Moisture (SSMI)</p><p className="font-mono text-gray-800">{satelliteContext.soil_moisture_index?.relative_ssmi_pct !== undefined && satelliteContext.soil_moisture_index?.relative_ssmi_pct !== null ? `${satelliteContext.soil_moisture_index.relative_ssmi_pct}%` : 'N/A'}</p></div>
                       <div><p className="text-gray-500 text-xs font-semibold">Dominant LULC</p><p className="font-semibold text-gray-800">{satelliteContext.lulc_dominant_class}</p></div>
                     </div>
                   </>

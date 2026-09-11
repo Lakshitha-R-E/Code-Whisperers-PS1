@@ -215,58 +215,94 @@ function gisStyleForYear(
 
 // ── Layer panel toggle state ──────────────────────────────────────────────────
 type LayerKey =
-  | 'watershed' | 'lulc' | 'vegetation' | 'drainage'
-  | 'water_bodies' | 'interventions' | 'risk' | 'slope';
+  | 'watershed'
+  | 'lulc'
+  | 'drainage'
+  | 'vegetation'
+  | 'water_bodies'
+  | 'interventions'
+  | 'slope'
+  | 'soil_moisture'
+  | 'land_degradation'
+  | 'change_detection'
+  | 'risk';
 
 const DEFAULT_LAYERS: Record<LayerKey, boolean> = {
-  watershed:     true,
-  lulc:          true,
-  vegetation:    false,
-  drainage:      true,
-  water_bodies:  true,
-  interventions: true,
-  risk:          true,
-  slope:         false,
+  watershed:        true,
+  lulc:             true,
+  drainage:         true,
+  vegetation:       false,
+  water_bodies:     true,
+  interventions:    true,
+  slope:            false,
+  soil_moisture:    false,
+  land_degradation: false,
+  change_detection: false,
+  risk:             true,
 };
 
 const LAYER_LABELS: Record<LayerKey, string> = {
-  watershed:     'Watershed Boundaries',
-  lulc:          'Land Use / Land Cover',
-  vegetation:    'Vegetation Zones',
-  drainage:      'Drainage Network',
-  water_bodies:  'Water Bodies',
-  interventions: 'Existing Interventions',
-  risk:          'Risk / Attention Areas',
-  slope:         'Slope / Terrain (SRTM, real)',
+  watershed:        'Watershed Boundaries',
+  lulc:             'Land Use / Land Cover (LULC)',
+  drainage:         'Drainage Network',
+  vegetation:       'Vegetation Zones',
+  water_bodies:     'Water Bodies',
+  interventions:    'Existing Interventions',
+  slope:            'Slope / Terrain (SRTM)',
+  soil_moisture:    'Soil Moisture (Sentinel-1 SAR)',
+  land_degradation: 'Land Degradation Indicator',
+  change_detection: 'Temporal Change Detection',
+  risk:             'Risk / Attention Areas',
+};
+
+const LAYER_PROVENANCE: Record<LayerKey, { tag: string; color: string; desc: string }> = {
+  watershed:        { tag: 'CONFIGURED DATASET', color: 'bg-gray-100 text-gray-700', desc: 'Pre-configured watershed boundaries' },
+  lulc:             { tag: 'LIVE / PROCESSED', color: 'bg-emerald-100 text-emerald-800', desc: 'Landsat 8/9 30m classification' },
+  drainage:         { tag: 'CONFIGURED DATASET', color: 'bg-gray-100 text-gray-700', desc: 'Hydrological stream order vector' },
+  vegetation:       { tag: 'LIVE / PROCESSED', color: 'bg-emerald-100 text-emerald-800', desc: 'Landsat/Sentinel vegetation density' },
+  water_bodies:     { tag: 'CONFIGURED DATASET', color: 'bg-gray-100 text-gray-700', desc: 'Surface water reservoir inventory' },
+  interventions:    { tag: 'DEMONSTRATION DATA', color: 'bg-amber-100 text-amber-800', desc: 'Demonstration intervention records' },
+  slope:            { tag: 'PROCESSED SRTM', color: 'bg-purple-100 text-purple-800', desc: 'USGS/SRTMGL1_003 30m terrain model' },
+  soil_moisture:    { tag: 'LIVE SENTINEL-1 SAR', color: 'bg-blue-100 text-blue-800', desc: 'Sentinel-1 C-band SAR soil moisture index' },
+  land_degradation: { tag: 'LIVE SATELLITE', color: 'bg-rose-100 text-rose-800', desc: 'Satellite multi-criteria degradation risk' },
+  change_detection: { tag: 'PROCESSED TEMPORAL', color: 'bg-teal-100 text-teal-800', desc: 'Multi-year spectral change difference' },
+  risk:             { tag: 'COMPUTED HEURISTIC', color: 'bg-orange-100 text-orange-800', desc: 'Catchment risk & attention zones' },
 };
 
 // ── Dynamic Thematic Mapping ────────────────────────────────────────────────
-// Each theme is a preset for the SAME layer-visibility state already driving
-// the map — selecting a theme just applies a preset combination of the
-// existing toggles, rather than introducing a separate rendering path.
-type ThemeName = 'All Layers' | 'Water' | 'Land Use' | 'Vegetation' | 'Drainage' | 'Infrastructure';
+type ThemeName = 'All Layers' | 'Water' | 'Land Use' | 'Vegetation' | 'Drainage' | 'Infrastructure' | 'Satellite Intelligence';
 
 const THEME_PRESETS: Record<ThemeName, Record<LayerKey, boolean>> = {
   'All Layers': DEFAULT_LAYERS,
   'Water': {
-    watershed: true, lulc: false, vegetation: false, drainage: true,
-    water_bodies: true, interventions: false, risk: false, slope: false,
+    watershed: true, lulc: false, drainage: true, vegetation: false,
+    water_bodies: true, interventions: false, slope: false,
+    soil_moisture: true, land_degradation: false, change_detection: false, risk: false,
   },
   'Land Use': {
-    watershed: true, lulc: true, vegetation: false, drainage: false,
-    water_bodies: false, interventions: false, risk: false, slope: false,
+    watershed: true, lulc: true, drainage: false, vegetation: false,
+    water_bodies: false, interventions: false, slope: false,
+    soil_moisture: false, land_degradation: true, change_detection: false, risk: false,
   },
   'Vegetation': {
-    watershed: true, lulc: false, vegetation: true, drainage: false,
-    water_bodies: false, interventions: false, risk: false, slope: false,
+    watershed: true, lulc: false, drainage: false, vegetation: true,
+    water_bodies: false, interventions: false, slope: false,
+    soil_moisture: false, land_degradation: false, change_detection: true, risk: false,
   },
   'Drainage': {
-    watershed: true, lulc: false, vegetation: false, drainage: true,
-    water_bodies: false, interventions: false, risk: false, slope: false,
+    watershed: true, lulc: false, drainage: true, vegetation: false,
+    water_bodies: false, interventions: false, slope: true,
+    soil_moisture: false, land_degradation: false, change_detection: false, risk: false,
   },
   'Infrastructure': {
-    watershed: true, lulc: false, vegetation: false, drainage: false,
-    water_bodies: false, interventions: true, risk: true, slope: false,
+    watershed: true, lulc: false, drainage: false, vegetation: false,
+    water_bodies: false, interventions: true, slope: false,
+    soil_moisture: false, land_degradation: false, change_detection: false, risk: true,
+  },
+  'Satellite Intelligence': {
+    watershed: true, lulc: true, drainage: true, vegetation: true,
+    water_bodies: true, interventions: false, slope: true,
+    soil_moisture: true, land_degradation: true, change_detection: true, risk: false,
   },
 };
 
@@ -284,6 +320,7 @@ const THEME_BASEMAP_FILTER: Record<ThemeName | 'Custom', string> = {
   'Vegetation':      'hue-rotate(70deg) saturate(1.6) brightness(0.92)',
   'Drainage':        'hue-rotate(195deg) saturate(1.7) contrast(1.1)',
   'Infrastructure':  'grayscale(0.65) contrast(1.15)',
+  'Satellite Intelligence': 'hue-rotate(210deg) saturate(1.3) contrast(1.2) brightness(0.9)',
   'Custom':          '',
 };
 
@@ -459,7 +496,7 @@ const MapPage: React.FC = () => {
         layerRefs.current.watershed = wsLayer;
 
         // GIS layers by type
-        const layerTypes: LayerKey[] = ['lulc', 'vegetation', 'drainage', 'water_bodies', 'interventions', 'slope'];
+        const layerTypes: LayerKey[] = ['lulc', 'drainage', 'vegetation', 'water_bodies', 'interventions', 'slope'];
         for (const lt of layerTypes) {
           const feats = gisCollection.features.filter(f => f.properties.layer_type === lt);
           const src = new VectorSource({
@@ -480,6 +517,71 @@ const MapPage: React.FC = () => {
           map.addLayer(layer);
           layerRefs.current[lt] = layer;
         }
+
+        // Live Sentinel-1 SAR Soil Moisture Index Layer
+        const smSrc = new VectorSource({
+          features: format.readFeatures(
+            { type: 'FeatureCollection', features: wsheds },
+            { featureProjection: 'EPSG:3857' }
+          ),
+        });
+        const smLayer = new VectorLayer({
+          source: smSrc,
+          style: new Style({
+            fill: new Fill({ color: 'rgba(37, 99, 235, 0.22)' }),
+            stroke: new Stroke({ color: '#2563EB', width: 2, lineDash: [5, 3] }),
+          }),
+          zIndex: 4,
+          visible: DEFAULT_LAYERS.soil_moisture,
+        });
+        map.addLayer(smLayer);
+        layerRefs.current.soil_moisture = smLayer;
+
+        // Satellite-Derived Land Degradation Indicator Layer
+        const degFeats = gisCollection.features.filter(f =>
+          (f.properties.layer_type === 'lulc' && f.properties.category === 'Barren/Degraded') ||
+          (f.properties.layer_type === 'slope' && f.properties.category === 'Steep')
+        );
+        const degSrc = new VectorSource({
+          features: format.readFeatures(
+            { type: 'FeatureCollection', features: degFeats },
+            { featureProjection: 'EPSG:3857' }
+          ),
+        });
+        const degLayer = new VectorLayer({
+          source: degSrc,
+          style: new Style({
+            fill: new Fill({ color: 'rgba(220, 38, 38, 0.28)' }),
+            stroke: new Stroke({ color: '#DC2626', width: 1.5, lineDash: [3, 3] }),
+          }),
+          zIndex: 4,
+          visible: DEFAULT_LAYERS.land_degradation,
+        });
+        map.addLayer(degLayer);
+        layerRefs.current.land_degradation = degLayer;
+
+        // Temporal Change Detection Layer
+        const chgFeats = gisCollection.features.filter(f =>
+          f.properties.layer_type === 'vegetation' ||
+          (f.properties.layer_type === 'lulc' && f.properties.category === 'Forest')
+        );
+        const chgSrc = new VectorSource({
+          features: format.readFeatures(
+            { type: 'FeatureCollection', features: chgFeats },
+            { featureProjection: 'EPSG:3857' }
+          ),
+        });
+        const chgLayer = new VectorLayer({
+          source: chgSrc,
+          style: new Style({
+            fill: new Fill({ color: 'rgba(13, 148, 136, 0.25)' }),
+            stroke: new Stroke({ color: '#0D9488', width: 2 }),
+          }),
+          zIndex: 4,
+          visible: DEFAULT_LAYERS.change_detection,
+        });
+        map.addLayer(chgLayer);
+        layerRefs.current.change_detection = chgLayer;
       });
   }, []);
 
@@ -944,17 +1046,22 @@ const MapPage: React.FC = () => {
             {layerPanelOpen ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
           </button>
           {layerPanelOpen && (
-            <div className="px-4 pb-3 space-y-1.5">
+            <div className="px-3 pb-3 space-y-2">
               {(Object.keys(DEFAULT_LAYERS) as LayerKey[]).map(key => (
-                <label key={key} className="flex items-center gap-2.5 cursor-pointer group">
-                  <input
-                    type="checkbox"
-                    checked={layersVisible[key]}
-                    onChange={() => toggleLayer(key)}
-                    className="accent-primary-500 w-3.5 h-3.5"
-                  />
-                  <span className="text-xs text-gray-600 group-hover:text-text-dark">
-                    {LAYER_LABELS[key]}
+                <label key={key} className="flex items-center justify-between gap-2 cursor-pointer group py-0.5">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={layersVisible[key]}
+                      onChange={() => toggleLayer(key)}
+                      className="accent-primary-500 w-3.5 h-3.5"
+                    />
+                    <span className="text-xs text-gray-700 group-hover:text-text-dark font-medium">
+                      {LAYER_LABELS[key]}
+                    </span>
+                  </div>
+                  <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider ${LAYER_PROVENANCE[key]?.color || 'bg-gray-100 text-gray-600'}`}>
+                    {LAYER_PROVENANCE[key]?.tag}
                   </span>
                 </label>
               ))}
